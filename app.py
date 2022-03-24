@@ -52,12 +52,9 @@ def display_text(msg):
 
 
 def search():
-    resp = logic.wait_keyword()
+    display_text("Hi, what room/facility are you looking for?")
+    resp = logic.get_query()
     display_text(resp)
-
-
-def search1():
-    display_text("Search Btn")
 
 
 def report():
@@ -69,7 +66,7 @@ def update():
 
 
 # Main Window Buttons
-search_btn = Button(root, text='Search', fg='white', bg='black', command=search1, height=4, width=18)
+search_btn = Button(root, text='Search', fg='white', bg='black', command=search, height=4, width=18)
 search_btn.place(relx=0.45, rely=0.5, anchor=CENTER)
 report_btn = Button(root, text='Report', fg='white', bg='black', command=report, height=4, width=18)
 report_btn.place(relx=0.55, rely=0.5, anchor=CENTER)
