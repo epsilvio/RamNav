@@ -56,58 +56,24 @@ def search():
     display_text(resp)
 
 
-def wait_keyword():
-    """runs keyword spotting locally, with direct access to the result audio"""
-    # Creates an instance of a keyword recognition model. Update this to
-    # point to the location of your keyword recognition model.
-    model = speechsdk.KeywordRecognitionModel("RamNav-Trigger.table")
-    # The phrase your keyword recognition model triggers on.
-    keyword = "Hey RamNav"
-    # Create a local keyword recognizer with the default microphone device for input.
-    keyword_recognizer = speechsdk.KeywordRecognizer()
-    done = False
+def search1():
+    display_text("Search Btn")
 
-    def recognized_cb(evt):
-        # Only a keyword phrase is recognized. The result cannot be 'NoMatch'
-        # and there is no timeout. The recognizer runs until a keyword phrase
-        # is detected or recognition is canceled (by stop_recognition_async()
-        # or due to the end of an input file or stream).
-        result = evt.result
-        if result.reason == speechsdk.ResultReason.RecognizedKeyword:
-            time.sleep(0.5)
 
-        nonlocal done
-        done = True
+def report():
+    display_text("Report Btn")
 
-    def canceled_cb(evt):
-        result = evt.result
-        if result.reason == speechsdk.ResultReason.Canceled:
-            display_text('Keyword Waiting Canceled')
-        nonlocal done
-        done = True
 
-    # Connect callbacks to the events fired by the keyword recognizer.
-    keyword_recognizer.recognized.connect(recognized_cb)
-    keyword_recognizer.canceled.connect(canceled_cb)
-    # Start keyword recognition.
-    # clear()
-    result_future = keyword_recognizer.recognize_once_async(model)
-    display_text('Say "Hey, RamNav!" to start searching...')
-    result = result_future.get()
-    # Read result audio (incl. the keyword).
-    if result.reason == speechsdk.ResultReason.RecognizedKeyword:
-        time.sleep(2)  # give some time so the stream is filled
-        result_stream = speechsdk.AudioDataStream(result)
-        result_stream.detach_input()  # stop any more data from input getting to the stream
-        # get_query()
+def update():
+    display_text("Update Btn")
 
 
 # Main Window Buttons
-search_btn = Button(root, text='Search', fg='white', bg='black', command=wait_keyword, height=4, width=18)
+search_btn = Button(root, text='Search', fg='white', bg='black', command=search1, height=4, width=18)
 search_btn.place(relx=0.45, rely=0.5, anchor=CENTER)
-report_btn = Button(root, text='Report', fg='white', bg='black', command="", height=4, width=18)
+report_btn = Button(root, text='Report', fg='white', bg='black', command=report, height=4, width=18)
 report_btn.place(relx=0.55, rely=0.5, anchor=CENTER)
-update_btn = Button(root, text='Update', fg='white', bg='black', command="", height=4, width=18)
+update_btn = Button(root, text='Update', fg='white', bg='black', command=update, height=4, width=18)
 update_btn.place(relx=0.45, rely=0.6, anchor=CENTER)
 exit_btn = Button(root, text='Close', fg='white', bg='black', command=exit_app, height=4, width=18)
 exit_btn.place(relx=0.55, rely=0.6, anchor=CENTER)
