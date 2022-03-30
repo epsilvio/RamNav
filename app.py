@@ -2,8 +2,6 @@ import tkinter
 from tkinter import *
 from tkinter import ttk, filedialog, messagebox
 import PIL
-from PIL import Image, ImageTk
-import speech_recognition as sr
 import json
 import pyodbc
 import requests
@@ -12,6 +10,7 @@ from time import sleep
 import os
 import time
 import threading
+import speech_recognition as sr
 
 try:
     import azure.cognitiveservices.speech as speechsdk
@@ -32,6 +31,7 @@ AZURELOCATION = "southeastasia"
 file = open('wordbank.json')
 wordbank = json.load(file)
 rooms = []
+listener = sr.Recognizer()
 
 
 class AsyncRecog(threading.Thread):
@@ -80,6 +80,48 @@ class AsyncRecog(threading.Thread):
             self.response = True
 
 
+class SearchRm(threading.Thread):
+    def __init__(self, recognizer, key, location):
+        super(SearchRm, self).__init__()
+        self.recognizer = recognizer
+        self.key = key
+        self.location = location
+        self.query = None
+
+    def run(self):
+        with sr.Microphone() as source:
+            audio = self.recognizer.listen(source)
+
+        # write audio to a WAV file
+        with open("query.wav", "wb") as f:
+            f.write(audio.get_wav_data())
+
+        # obtain path to "results.wav" in the same folder as this script
+        from os import path
+
+        AUDIO_FILE = path.join(path.dirname(path.realpath(__file__)), "query.wav")
+
+        # use the audio file as the audio source
+        with sr.AudioFile(AUDIO_FILE) as source:
+            audio = self.recognizer.record(source)  # read the entire audio file
+
+        query = self.recognizer.recognize_azure(audio, key=AZURE_SPEECH_KEY, location=AZURELOCATION)
+
+        # remove if last character is not a letter
+        while query and not query[-1].isalpha():
+            query = query[:-1]
+
+        try:
+            self.query = "I think you said: " + query
+            #process_query(query)
+        except sr.UnknownValueError:
+            self.query = "I did not understand what you said, please try again."
+            #wait_keyword()
+        except sr.RequestError as e:
+            self.query = "Could not request results from the server; {0}".format(e)
+            #wait_keyword()
+
+
 class App(tkinter.Tk):
     def __init__(self):
         super().__init__()
@@ -121,7 +163,9 @@ class App(tkinter.Tk):
         self.text_panel.configure(state='disabled')
 
     def search(self):
-        self.display_text("")
+        self.display_text("Hi, which room/facility are you looking for?")
+        time.sleep(1)
+        self.start_query()
 
     def start_listen(self):
         recog_thread = AsyncRecog(speechsdk.KeywordRecognizer(),
@@ -136,11 +180,23 @@ class App(tkinter.Tk):
         else:
             thread.join()
             if thread.response:
-                self.display_text("Hi, what room/facility are you looking for?")
+                self.search()
             else:
                 self.display_text("An error occured, try again")
                 time.sleep(3)
                 self.start_listen()
+
+    def start_query(self):
+        search_thread = SearchRm(listener, AZURE_SPEECH_KEY, AZURELOCATION)
+        search_thread.start()
+        self.get_query(search_thread)
+
+    def get_query(self, thread):
+        if thread.is_alive():
+            self.after(100, lambda: self.get_query(thread))
+        else:
+            thread.join()
+            self.display_text(thread.query)
 
     def report(self):
         self.display_text("Report Btn")
