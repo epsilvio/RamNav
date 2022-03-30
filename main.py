@@ -31,7 +31,7 @@ except ImportError:
 
 
 def get_query():
-    #print("Hi, what room/facility are you looking for?")
+    print("Hi, what room/facility are you looking for?")
     # obtain audio from the microphone
     r = sr.Recognizer()
     with sr.Microphone() as source:
@@ -58,14 +58,14 @@ def get_query():
         query = query[:-1]
 
     try:
-        return "I think you said: " + query
-        #process_query(query)
+        print("I think you said: " + query)
+        process_query(query)
     except sr.UnknownValueError:
-        return "I did not understand what you said, please try again."
-        #wait_keyword()
+        print("I did not understand what you said, please try again.")
+        wait_keyword()
     except sr.RequestError as e:
-        return "Could not request results from the server; {0}".format(e)
-        #wait_keyword()
+        print("Could not request results from the server; {0}".format(e))
+        wait_keyword()
 
 
 def process_query(query):
@@ -201,4 +201,4 @@ def wait_keyword():
     #   stopped = stop_future.get()
 
 
-#wait_keyword()
+wait_keyword()

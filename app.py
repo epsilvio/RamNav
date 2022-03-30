@@ -11,7 +11,6 @@ from io import BytesIO
 from time import sleep
 import os
 import time
-import main as logic
 import threading
 
 try:
