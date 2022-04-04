@@ -1,16 +1,14 @@
 import tkinter
 from tkinter import *
 from tkinter import ttk, filedialog, messagebox
-import PIL
+from PIL import Image
 import json
-import pyodbc
+import time
 import requests
 from io import BytesIO
-from time import sleep
-import os
-import time
-import threading
 import speech_recognition as sr
+import ProcessQuery as PQ
+import GetQuery as GQ
 
 try:
     import azure.cognitiveservices.speech as speechsdk
@@ -28,98 +26,9 @@ except ImportError:
 # Global Variables
 AZURE_SPEECH_KEY = "d2216ffb09af4c27ad2df097eb7f3cd3"
 AZURELOCATION = "southeastasia"
+listener = sr.Recognizer()
 file = open('wordbank.json')
 wordbank = json.load(file)
-rooms = []
-listener = sr.Recognizer()
-
-
-class AsyncRecog(threading.Thread):
-    def __init__(self, recognizer, model, keyword):
-        super(AsyncRecog, self).__init__()
-        self.sdk = recognizer
-        self.speech = model
-        self.key = keyword
-        self.response = None
-
-    def run(self):
-        done = False
-
-        def recognized_cb(evt):
-            # Only a keyword phrase is recognized. The result cannot be 'NoMatch'
-            # and there is no timeout. The recognizer runs until a keyword phrase
-            # is detected or recognition is canceled (by stop_recognition_async()
-            # or due to the end of an input file or stream).
-            result = evt.result
-            if result.reason == speechsdk.ResultReason.RecognizedKeyword:
-                time.sleep(0.5)
-
-            nonlocal done
-            done = True
-
-        def canceled_cb(evt):
-            result = evt.result
-            if result.reason == speechsdk.ResultReason.Canceled:
-                self.response = False
-            nonlocal done
-            done = True
-
-        # Connect callbacks to the events fired by the keyword recognizer.
-        self.sdk.recognized.connect(recognized_cb)
-        self.sdk.canceled.connect(canceled_cb)
-
-        # Start keyword recognition.
-        result_future = self.sdk.recognize_once_async(self.speech)
-        result = result_future.get()
-
-        # Read result audio (incl. the keyword).
-        if result.reason == speechsdk.ResultReason.RecognizedKeyword:
-            time.sleep(2)  # give some time so the stream is filled
-            result_stream = speechsdk.AudioDataStream(result)
-            result_stream.detach_input()  # stop any more data from input getting to the stream
-            self.response = True
-
-
-class SearchRm(threading.Thread):
-    def __init__(self, recognizer, key, location):
-        super(SearchRm, self).__init__()
-        self.recognizer = recognizer
-        self.key = key
-        self.location = location
-        self.query = None
-
-    def run(self):
-        with sr.Microphone() as source:
-            audio = self.recognizer.listen(source)
-
-        # write audio to a WAV file
-        with open("query.wav", "wb") as f:
-            f.write(audio.get_wav_data())
-
-        # obtain path to "results.wav" in the same folder as this script
-        from os import path
-
-        AUDIO_FILE = path.join(path.dirname(path.realpath(__file__)), "query.wav")
-
-        # use the audio file as the audio source
-        with sr.AudioFile(AUDIO_FILE) as source:
-            audio = self.recognizer.record(source)  # read the entire audio file
-
-        query = self.recognizer.recognize_azure(audio, key=AZURE_SPEECH_KEY, location=AZURELOCATION)
-
-        # remove if last character is not a letter
-        while query and not query[-1].isalpha():
-            query = query[:-1]
-
-        try:
-            self.query = "I think you said: " + query
-            #process_query(query)
-        except sr.UnknownValueError:
-            self.query = "I did not understand what you said, please try again."
-            #wait_keyword()
-        except sr.RequestError as e:
-            self.query = "Could not request results from the server; {0}".format(e)
-            #wait_keyword()
 
 
 class App(tkinter.Tk):
@@ -168,8 +77,8 @@ class App(tkinter.Tk):
         self.start_query()
 
     def start_listen(self):
-        recog_thread = AsyncRecog(speechsdk.KeywordRecognizer(),
-                                  speechsdk.KeywordRecognitionModel("RamNav-Trigger.table"), "Hey RamNav")
+        recog_thread = GQ.AsyncRecog(speechsdk.KeywordRecognizer(),
+                                     speechsdk.KeywordRecognitionModel("RamNav-Trigger.table"), "Hey RamNav")
         recog_thread.start()
         self.wait_key(recog_thread)
 
@@ -183,11 +92,11 @@ class App(tkinter.Tk):
                 self.search()
             else:
                 self.display_text("An error occured, try again")
-                time.sleep(3)
+                time.sleep(2)
                 self.start_listen()
 
     def start_query(self):
-        search_thread = SearchRm(listener, AZURE_SPEECH_KEY, AZURELOCATION)
+        search_thread = GQ.SearchRm(listener, AZURE_SPEECH_KEY, AZURELOCATION)
         search_thread.start()
         self.get_query(search_thread)
 
@@ -196,7 +105,79 @@ class App(tkinter.Tk):
             self.after(100, lambda: self.get_query(thread))
         else:
             thread.join()
-            self.display_text(thread.query)
+            if thread.query is not None:
+                self.display_text(thread.query)
+                self.process_query(thread.query)
+            else:
+                if thread.uv:
+                    self.display_text("I did not understand what you said. Try again.")
+                    time.sleep(3)
+                    self.start_listen()
+                elif thread.re:
+                    self.display_text("Server error. Try again.")
+                    time.sleep(3)
+                    self.start_listen()
+
+    def process_query(self, query):
+        pq_thread = PQ.ProcessQuery(query)
+        pq_thread.start()
+        self.get_choices(pq_thread)
+
+    def get_choices(self, thread):
+        if thread.is_alive():
+            self.after(100, lambda: self.get_choices(thread))
+        else:
+            thread.join()
+            if len(thread.result) > 1:
+                self.show_choices(thread.result)
+            elif len(thread.result) == 1:
+                self.get_result(thread.result)
+            elif len(thread.result) < 1:
+                self.display_text("Your query returned no results. Try again.")
+                time.sleep(3)
+                self.start_listen()
+
+    def get_result(self, room):
+        gr_thread = PQ.ShowResult(room)
+        gr_thread.start()
+        self.show_result(gr_thread)
+
+    def show_choices(self, choices):
+        sc_thread = PQ.ShowChoices(choices)
+        sc_thread.start()
+        self.disp_choices(sc_thread)
+
+    def disp_choices(self, thread):
+        if thread.is_alive():
+            self.after(100, lambda: self.disp_choices(thread))
+        else:
+            thread.join()
+            if thread.msg is not None:
+                self.display_text(thread.msg)
+            else:
+                self.display_text("An error occured. Try again.")
+                time.sleep(3)
+                self.start_listen()
+
+    def show_result(self, thread):
+        if thread.is_alive():
+            self.after(100, lambda: self.show_result(thread))
+        else:
+            thread.join()
+            if thread.result is not None:
+                room = thread.result
+                self.display_text("Room Name: " + str(room['Name']) + "\nRoom Number: " + str(room['Number'])
+                                  + "\nFloor Level: " + str(room['Level']) + "\nImage Link: " + str(room['Link']))
+                try:
+                    response = requests.get(str(room['Link']))
+                    img = Image.open(BytesIO(response.content))
+                    img.show()
+                except ValueError:
+                    messagebox.showwarning("""No available image for this location!""")
+            else:
+                self.display_text("Your query returned no results. Try again.")
+                time.sleep(3)
+                self.start_listen()
 
     def report(self):
         self.display_text("Report Btn")
@@ -209,5 +190,3 @@ class App(tkinter.Tk):
 if __name__ == "__main__":
     app = App()
     app.mainloop()
-
-
