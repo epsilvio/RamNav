@@ -167,13 +167,15 @@ class App(tkinter.Tk):
             if thread.result is not None:
                 room = thread.result
                 self.display_text("Room Name: " + str(room['Name']) + "\nRoom Number: " + str(room['Number'])
-                                  + "\nFloor Level: " + str(room['Level']) + "\nImage Link: " + str(room['Link']))
+                                  + "\nFloor Level: " + str(room['Level']) + "\nImage Link: " + str(room['Link'])
+                                  + "\n\n\nSay 'Hey RamNav!' to start searching again.")
                 try:
                     response = requests.get(str(room['Link']))
                     img = Image.open(BytesIO(response.content))
                     img.show()
                 except ValueError:
                     messagebox.showwarning("""No available image for this location!""")
+                self.start_listen()
             else:
                 self.display_text("Your query returned no results. Try again.")
                 time.sleep(3)
