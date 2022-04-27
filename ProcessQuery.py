@@ -15,6 +15,8 @@ class ProcessQuery(threading.Thread):
         self.result = None
 
     def run(self):
+        # Clear rooms variable
+        rooms.clear()
         # split the text
         words = self.query.split()
 
@@ -78,7 +80,6 @@ class ShowResult(threading.Thread):
                         "Name": str(row[1]),
                         "Number": str(row[2]),
                         "Level": str(row[3]),
-                        "Link": str(row[4])
                     }
                     row = cursor.fetchone()
                     rooms.clear()
