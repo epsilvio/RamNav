@@ -1,7 +1,6 @@
 import tkinter
 from tkinter import *
 from tkinter import ttk, filedialog, messagebox
-
 import PIL
 from PIL import ImageTk, Image
 import json
@@ -66,6 +65,8 @@ class App(tkinter.Tk):
         self.qr_panel.place(x=1100, y=100)
         self.create_btns()
         self.create_txt()
+        self.display_map('http://ramnav.westeurope.cloudapp.azure.com/images/map/placeholder.png')
+        self.display_qr('http://ramnav.westeurope.cloudapp.azure.com/images/qr/placeholder.png')
         self.start_listen()
 
     def create_btns(self):
@@ -91,9 +92,9 @@ class App(tkinter.Tk):
         self.text_panel.insert(END, ''.join(msg))
         self.text_panel.configure(state='disabled')
 
-    def display_map(self):
+    def display_map(self, link):
         try:
-            response = requests.get('http://ramnav.westeurope.cloudapp.azure.com/images/map/201.png')
+            response = requests.get(link)
             self.map_img = Image.open(BytesIO(response.content))
             self.map_img = self.map_img.resize((800, 450), Image.ANTIALIAS)
             self.map_img = ImageTk.PhotoImage(self.map_img)
@@ -102,9 +103,9 @@ class App(tkinter.Tk):
         except (PIL.UnidentifiedImageError, AttributeError):
             messagebox.showwarning("Warning", "No/Invalid file selected")
 
-    def display_qr(self):
+    def display_qr(self, link):
         try:
-            response = requests.get('http://ramnav.westeurope.cloudapp.azure.com/images/qr/201.png')
+            response = requests.get(link)
             self.qr_img = Image.open(BytesIO(response.content))
             self.qr_img = self.qr_img.resize((600, 600), Image.ANTIALIAS)
             self.qr_img = ImageTk.PhotoImage(self.qr_img)
@@ -117,6 +118,10 @@ class App(tkinter.Tk):
         self.display_text("Hi, which room/facility are you looking for?")
         time.sleep(1)
         self.start_query()
+
+    def show_defaults(self):
+        self.display_map('http://ramnav.westeurope.cloudapp.azure.com/images/map/placeholder.png')
+        self.display_qr('http://ramnav.westeurope.cloudapp.azure.com/images/qr/placeholder.png')
 
     def start_listen(self):
         recog_thread = GQ.AsyncRecog(speechsdk.KeywordRecognizer(),
@@ -133,8 +138,9 @@ class App(tkinter.Tk):
             if thread.response:
                 self.search()
             else:
-                self.display_text("An error occured, try again")
-                time.sleep(2)
+                self.display_text("An error occured, try again.\n\nSay 'Hey, RamNav' to start searching.")
+                time.sleep(3)
+                self.show_defaults()
                 self.start_listen()
 
     def start_query(self):
@@ -149,15 +155,18 @@ class App(tkinter.Tk):
             thread.join()
             if thread.query is not None:
                 self.display_text(thread.query)
+                time.sleep(3)
                 self.process_query(thread.query)
             else:
                 if thread.uv:
                     self.display_text("I did not understand what you said. Try again.")
                     time.sleep(3)
+                    self.show_defaults()
                     self.start_listen()
                 elif thread.re:
-                    self.display_text("Server error. Try again.")
+                    self.display_text("Server error. Try again. \n\nSay 'Hey, RamNav' to start searching.")
                     time.sleep(3)
+                    self.show_defaults()
                     self.start_listen()
 
     def process_query(self, query):
@@ -171,35 +180,76 @@ class App(tkinter.Tk):
         else:
             thread.join()
             if len(thread.result) > 1:
-                self.show_choices(thread.result)
+                if len(thread.result) > 3:
+                    self.display_text("Your query returned too many possible results. Please try to rephrase your query.\n\nSay 'Hey, RamNav' to start searching.")
+                    self.show_defaults()
+                    self.start_listen()
+                else:
+                    self.show_choices(thread.result)
             elif len(thread.result) == 1:
                 self.get_result(thread.result)
             elif len(thread.result) < 1:
-                self.display_text("Your query returned no results. Try again.")
+                self.display_text("Your query returned no results. Please try to rephrase your query.\n\nSay 'Hey, RamNav' to start searching.")
                 time.sleep(3)
+                self.show_defaults()
                 self.start_listen()
 
-    def get_result(self, room):
-        gr_thread = PQ.ShowResult(room)
-        gr_thread.start()
-        self.show_result(gr_thread)
+    def ask_choice(self, ids):
+        ak_thread = PQ.GetChoice(listener, AZURE_SPEECH_KEY, AZURELOCATION, ids)
+        ak_thread.start()
+        self.get_choice(ak_thread)
+
+    def get_choice(self, thread):
+        if thread.is_alive():
+            self.after(100, lambda: self.get_choice(thread))
+        else:
+            thread.join()
+            if thread.response is not None:
+                self.display_text(thread.response)
+                time.sleep(3)
+                if thread.choice is not None:
+                    self.display_text("\nGetting info of Room " + thread.choice[0])
+                    self.get_result(thread.choice)
+                else:
+                    self.start_listen()
+            else:
+                if thread.uv:
+                    self.display_text("Unknown Value Error Occured. Please query again.\n\nSay 'Hey, RamNav' to start searching.")
+                    self.show_defaults()
+                    self.start_listen()
+                elif thread.re:
+                    self.display_text("Request Error Occured. Please query again.\n\nSay 'Hey, RamNav' to start searching.")
+                    self.show_defaults()
+                    self.start_listen()
+                elif thread.ie:
+                    self.display_text("Invalid choice. Please query again.\n\nSay 'Hey, RamNav' to start searching.")
+                    self.show_defaults()
+                    self.start_listen()
 
     def show_choices(self, choices):
         sc_thread = PQ.ShowChoices(choices)
         sc_thread.start()
-        self.disp_choices(sc_thread)
+        self.disp_choices(sc_thread, choices)
 
-    def disp_choices(self, thread):
+    def disp_choices(self, thread, choices):
         if thread.is_alive():
             self.after(100, lambda: self.disp_choices(thread))
         else:
             thread.join()
             if thread.msg is not None:
                 self.display_text(thread.msg)
+                time.sleep(3)
+                self.ask_choice(choices)
             else:
                 self.display_text("An error occured. Try again.")
                 time.sleep(3)
+                self.show_defaults()
                 self.start_listen()
+
+    def get_result(self, room):
+        gr_thread = PQ.ShowResult(room)
+        gr_thread.start()
+        self.show_result(gr_thread)
 
     def show_result(self, thread):
         if thread.is_alive():
@@ -208,13 +258,14 @@ class App(tkinter.Tk):
             thread.join()
             if thread.result is not None:
                 room = thread.result
-                self.display_text("The room " + str(room['Name']) + " is at the " + str(room['Level']) + " Floor.\n\nSay 'Hey RamNav!' to start searching again.")
-                self.display_map()
-                self.display_qr()
+                self.display_text("The " + str(room['Name']) + " is at the " + str(room['Level']) + " Floor.\n\nSay 'Hey RamNav!' to start searching again.")
+                self.display_map(str(room['Map-Link']))
+                self.display_qr(str(room['QR-Link']))
                 self.start_listen()
             else:
-                self.display_text("Your query returned no results. Try again.")
+                self.display_text("Your query returned no results. Please try to rephrase your query.\n\nSay 'Hey, RamNav' to start searching.")
                 time.sleep(3)
+                self.show_defaults()
                 self.start_listen()
 
     def report(self):

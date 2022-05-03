@@ -97,8 +97,8 @@ class SearchRm(threading.Thread):
         query = self.recognizer.recognize_azure(audio, key=AZURE_SPEECH_KEY, location=AZURELOCATION)
 
         # remove if last character is not a letter
-        while query and not query[-1].isalpha():
-            query = query[:-1]
+        #while query and not query[-1].isalpha():
+        #    query = query[:-1]
 
         try:
             self.query = "I think you said: " + query

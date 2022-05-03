@@ -18,12 +18,20 @@ for x in myresult:
 
 mydb.close()"""
 
-import pyodbc
-cnxn = pyodbc.connect('DRIVER={ODBC Driver 18 for SQL Server};User ID=ramnav;Password=password;Server=20.101.71.189;Database=ramnav-db;Port=3306')
-cursor = cnxn.cursor()
-cursor.execute("SELECT * FROM Rooms")
-row = cursor.fetchone()
-while row:
-    print(row)
-    row = cursor.fetchone()
-cnxn.close()
+import requests
+
+file = requests.get('http://ramnav.westeurope.cloudapp.azure.com/js/dictionary.json')
+wordbank = file.json()
+txt = ("Where can I play basketball")
+counter = 0
+rooms = []
+
+for key1 in wordbank.keys():
+    for key2 in wordbank[key1][0].keys():
+        if wordbank[key1][0][key2].lower() in txt.lower():
+            counter += 1
+            room_id = key1
+            rooms.append(room_id)
+            break
+print(wordbank)
+#print(wordbank['215'][0]['keyword1'].lower() in txt.lower())

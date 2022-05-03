@@ -28,5 +28,11 @@
       "room_id": "5",
       "name:" :"Parking"
     }
+  ],
+  "lecture": [
+    {
+      "room_id": "201",
+      "name:" :"Lecture Room"
+    }
   ]
 }
