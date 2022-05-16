@@ -21,7 +21,7 @@ RamNav is a Smart Building Directory system developed by a group of Computer Eng
 
 RamNav uses a number of sources to work properly:
 
-- Python
+- Python 3.6.0
 - Microsoft Speech Services
 - Microsoft Azure Database
 - Tkinter

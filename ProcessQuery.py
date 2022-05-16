@@ -1,6 +1,5 @@
 import threading
 import time
-
 import mysql.connector
 import requests
 import speech_recognition as sr
