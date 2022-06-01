@@ -2,6 +2,7 @@ import threading
 import time
 from tkinter import messagebox
 import speech_recognition as sr
+
 try:
     import azure.cognitiveservices.speech as speechsdk
 except ImportError:
@@ -15,7 +16,6 @@ except ImportError:
 
     sys.exit(1)
 
-
 AZURE_SPEECH_KEY = "d2216ffb09af4c27ad2df097eb7f3cd3"
 AZURELOCATION = "southeastasia"
 listener = sr.Recognizer()
@@ -24,6 +24,7 @@ listener = sr.Recognizer()
 class AsyncRecog(threading.Thread):
     def __init__(self, recognizer, model, keyword):
         super(AsyncRecog, self).__init__()
+        self.setDaemon(True)
         self.sdk = recognizer
         self.speech = model
         self.key = keyword
@@ -43,6 +44,7 @@ class AsyncRecog(threading.Thread):
 
             nonlocal done
             done = True
+            self.response = True
 
         def canceled_cb(evt):
             result = evt.result
@@ -68,11 +70,12 @@ class AsyncRecog(threading.Thread):
 
 
 class SearchRm(threading.Thread):
-    def __init__(self, recognizer, key, location):
+    def __init__(self):
         super(SearchRm, self).__init__()
-        self.recognizer = recognizer
-        self.key = key
-        self.location = location
+        self.setDaemon(True)
+        self.recognizer = listener
+        self.key = AZURE_SPEECH_KEY
+        self.location = AZURELOCATION
         self.query = None
         self.uv = False
         self.re = False
@@ -94,17 +97,67 @@ class SearchRm(threading.Thread):
         with sr.AudioFile(AUDIO_FILE) as source:
             audio = self.recognizer.record(source)  # read the entire audio file
 
-        query = self.recognizer.recognize_azure(audio, key=AZURE_SPEECH_KEY, location=AZURELOCATION)
+        query = self.recognizer.recognize_azure(audio, key=self.key, location=self.location)
 
         # remove if last character is not a letter
-        #while query and not query[-1].isalpha():
+        # while query and not query[-1].isalpha():
         #    query = query[:-1]
 
         try:
-            self.query = "I think you said: " + query
+            self.query = query
         except sr.UnknownValueError:
             self.query = None
             self.uv = True
-        except sr.RequestError as e:
+            print("Unknown Value Error in Query Acquisition")
+        except sr.RequestError:
             self.query = None
             self.re = True
+            print("Request Error in Query Acquisition")
+
+
+class VerifyQuery(threading.Thread):
+    def __init__(self, query):
+        super(VerifyQuery, self).__init__()
+        self.setDaemon(True)
+        self.recognizer = listener
+        self.key = AZURE_SPEECH_KEY
+        self.location = AZURELOCATION
+        self.query = query
+        self.uv = False
+        self.re = False
+        self.confirm = None
+
+    def run(self):
+        with sr.Microphone() as source:
+            audio = self.recognizer.listen(source)
+
+        # write audio to a WAV file
+        with open("confirm.wav", "wb") as f:
+            f.write(audio.get_wav_data())
+
+        # obtain path to "results.wav" in the same folder as this script
+        from os import path
+
+        AUDIO_FILE = path.join(path.dirname(path.realpath(__file__)), "confirm.wav")
+
+        # use the audio file as the audio source
+        with sr.AudioFile(AUDIO_FILE) as source:
+            audio = self.recognizer.record(source)  # read the entire audio file
+
+        query = self.recognizer.recognize_azure(audio, key=self.key, location=self.location)
+
+        try:
+            if 'yes' in query.lower():
+                self.confirm = True
+            elif 'no' in query.lower():
+                self.confirm = False
+            else:
+                self.confirm = False
+        except sr.UnknownValueError:
+            self.query = None
+            self.uv = True
+            print("Unknown Value Error in Query Confirmation")
+        except sr.RequestError:
+            self.query = None
+            self.re = True
+            print("Request Error in Query Confirmation")

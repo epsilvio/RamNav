@@ -1,10 +1,11 @@
 import threading
 import time
-import mysql.connector
+#import mysql.connector
 import requests
 import speech_recognition as sr
+import qrcode
 
-file = requests.get('http://ramnav.westeurope.cloudapp.azure.com/js/dictionary.json')
+file = requests.get('http://ramnav.westeurope.cloudapp.azure.com/js/rooms.json')
 wordbank = file.json()
 rooms = []
 listener = sr.Recognizer()
@@ -13,6 +14,7 @@ listener = sr.Recognizer()
 class ProcessQuery(threading.Thread):
     def __init__(self, query):
         super(ProcessQuery, self).__init__()
+        self.setDaemon(True)
         self.query = query
         self.msg = None
         self.result = None
@@ -20,18 +22,24 @@ class ProcessQuery(threading.Thread):
     def run(self):
         # Clear rooms variable
         rooms.clear()
-        # split the text
-        # words = self.query.split()
 
         # check for keywords
         counter = 0
-        for key1 in wordbank.keys():
+        for room in wordbank:
+            for attr in room.keys():
+                if attr != 'roomID':
+                    if room[attr].lower() in self.query.lower():
+                        counter += 1
+                        room_id = room
+                        rooms.append(room_id)
+                        break
+        """for key1 in wordbank.keys():
             for key2 in wordbank[key1][0].keys():
                 if wordbank[key1][0][key2].lower() in self.query.lower():
                     counter += 1
                     room_id = key1
                     rooms.append(room_id)
-                    break
+                    break"""
 
         if counter == 0:
             # Print the message if the value does not exist
@@ -45,24 +53,30 @@ class ProcessQuery(threading.Thread):
 class ShowChoices(threading.Thread):
     def __init__(self, choices):
         super(ShowChoices, self).__init__()
+        self.setDaemon(True)
         self.choices = choices
         self.msg = None
 
     def run(self):
         num = 0
         tmp_msg = "Which room are you referring to? (Say 'First', 'Second', or 'Third'):\n"
-        for choice in self.choices:
+        for room in rooms:
+            num += 1
+            tmp_msg += str(num) + ". " + str(room['name']) + "\n"
+        self.msg = tmp_msg
+        """for choice in self.choices:
             for key in wordbank.keys():
                 tmp = key
                 if tmp == choice:
                     num += 1
                     tmp_msg += str(num) + ". " + str(wordbank[key][0]['name']) + "\n"
-        self.msg = tmp_msg
+        self.msg = tmp_msg"""
 
 
 class GetChoice(threading.Thread):
     def __init__(self, recognizer, key, location, ids):
         super(GetChoice, self).__init__()
+        self.setDaemon(True)
         self.recognizer = recognizer
         self.key = key
         self.location = location
@@ -104,7 +118,7 @@ class GetChoice(threading.Thread):
         if 'third' in query.lower():
             third = 1
         try:
-            if first+second+third != 1:
+            if first + second + third != 1:
                 self.response = "Invalid response, please try to query again.\n\nSay 'Hey, RamNav' to start searching."
                 self.choice = None
             else:
@@ -138,35 +152,37 @@ class GetChoice(threading.Thread):
 class ShowResult(threading.Thread):
     def __init__(self, id):
         super(ShowResult, self).__init__()
+        self.setDaemon(True)
         self.id = id
-        self.host = "20.101.71.189",
-        self.user = "azureuser",
-        self.password = "ramnav",
-        self.database = "ramnav-db"
         self.result = None
 
     def run(self):
-        mydb = mysql.connector.connect(
-            host="20.101.71.189",
+        """mydb = mysql.connector.connect(
+            host="ramnav-db.mysql.database.azure.com",
             user="azureuser",
-            password="ramnav",
+            password="Nextgen2021",
             database="ramnav-db"
         )
-
         mycursor = mydb.cursor()
-        mycursor.execute(
-            "SELECT * FROM Rooms INNER JOIN Images ON Rooms.roomID = Images.imgID WHERE Rooms.roomID = " + self.id[0])
+        mycursor.execute("SELECT * FROM Rooms INNER JOIN Images ON `roomID` = `imgID` WHERE `roomID` = " + self.id[0])
         myresult = mycursor.fetchone()
+        mydb.close()"""
+        self.result = [self.id['roomID'], self.id['name'], self.id['roomNum'],
+                       self.id['roomLvl'],
+                       "http://ramnav.westeurope.cloudapp.azure.com/images/map/" + self.id['roomID'] + ".png"]
+        self.create_qr(str(self.result[0]) + ".png")
+        rooms.clear()
 
-        while myresult:
-            self.result = {
-                "Name": str(myresult[1]),
-                "Number": str(myresult[2]),
-                "Level": str(myresult[3]),
-                "Map-Link": str(myresult[5]),
-                "QR-Link": str(myresult[6])
-            }
-            myresult = mycursor.fetchone()
-            rooms.clear()
-
-        mydb.close()
+    @staticmethod
+    def create_qr(room):
+        # Link for website
+        input_data = "http://ramnav.westeurope.cloudapp.azure.com/images/map/" + room
+        # Creating an instance of qrcode
+        qr = qrcode.QRCode(
+            version=1,
+            box_size=10,
+            border=5)
+        qr.add_data(input_data)
+        qr.make(fit=True)
+        img = qr.make_image(fill='black', back_color='white')
+        img.save('qrcode.png')
