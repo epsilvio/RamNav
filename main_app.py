@@ -69,7 +69,7 @@ class App(tkinter.Tk):
         self.create_btns()
         self.create_txt()
         self.display_map('http://ramnav.westeurope.cloudapp.azure.com/images/map/placeholder.png')
-        self.display_qr('http://ramnav.westeurope.cloudapp.azure.com/images/qr/placeholder.png')
+        self.display_local_qr('assets/qr_placeholder.png')
         time.sleep(3)
         self.get_audio('Say "Hey RamNav to start searching..."')
         self.start_listen()
@@ -121,9 +121,9 @@ class App(tkinter.Tk):
         except (PIL.UnidentifiedImageError, AttributeError):
             messagebox.showwarning("Warning", "No/Invalid file selected")
 
-    def display_local_qr(self):
+    def display_local_qr(self, img):
         try:
-            self.qr_img = Image.open('qrcode.png')
+            self.qr_img = Image.open(img)
             self.qr_img = self.qr_img.resize((600, 600), Image.ANTIALIAS)
             self.qr_img = ImageTk.PhotoImage(self.qr_img)
             self.qr_panel.configure(image=self.qr_img)
@@ -350,7 +350,7 @@ class App(tkinter.Tk):
                 self.display_text("The " + str(room[1]) + " is at the " + str(room[3]) + " Floor.\n\nSay 'Hey RamNav!' "
                                                                                          "to start searching again.")
                 self.display_map(room[4])
-                self.display_local_qr()
+                self.display_local_qr("qrcode.png")
                 self.get_audio("The " + str(room[1]) + " is at the " + str(room[3]) + " Floor... Say 'Hey RamNav!' to "
                                                                                       "start searching again.")
                 time.sleep(3)
