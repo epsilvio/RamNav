@@ -29,8 +29,7 @@ except ImportError:
 AZURE_SPEECH_KEY = "d2216ffb09af4c27ad2df097eb7f3cd3"
 AZURELOCATION = "southeastasia"
 listener = sr.Recognizer()
-file = open('wordbank.json')
-wordbank = json.load(file)
+settings = json.load(open('assets/settings.json'))
 screenW = 0
 screenH = 0
 
@@ -70,7 +69,7 @@ class App(tkinter.Tk):
         self.create_txt()
         self.display_map('http://ramnav.westeurope.cloudapp.azure.com/images/map/placeholder.png')
         self.display_local_qr('assets/qr_placeholder.png')
-        time.sleep(3)
+        time.sleep(5)
         self.get_audio('Say "Hey RamNav to start searching..."')
         self.start_listen()
 
@@ -107,17 +106,6 @@ class App(tkinter.Tk):
             self.map_img = ImageTk.PhotoImage(self.map_img)
             self.map_panel.configure(image=self.map_img)
             self.map_panel.image = self.map_img
-        except (PIL.UnidentifiedImageError, AttributeError):
-            messagebox.showwarning("Warning", "No/Invalid file selected")
-
-    def display_qr(self, link):
-        try:
-            response = requests.get(link)
-            self.qr_img = Image.open(BytesIO(response.content))
-            self.qr_img = self.qr_img.resize((600, 600), Image.ANTIALIAS)
-            self.qr_img = ImageTk.PhotoImage(self.qr_img)
-            self.qr_panel.configure(image=self.qr_img)
-            self.qr_panel.image = self.qr_img
         except (PIL.UnidentifiedImageError, AttributeError):
             messagebox.showwarning("Warning", "No/Invalid file selected")
 
@@ -158,7 +146,7 @@ class App(tkinter.Tk):
 
     def show_defaults(self):
         self.display_map('http://ramnav.westeurope.cloudapp.azure.com/images/map/placeholder.png')
-        self.display_qr('http://ramnav.westeurope.cloudapp.azure.com/images/qr/placeholder.png')
+        self.display_local_qr('assets/qr_placeholder.png')
         self.display_text("Say 'Hey, RamNav' to start searching.")
         self.get_audio("Say 'Hey, RamNav' to start searching.")
 
@@ -178,7 +166,7 @@ class App(tkinter.Tk):
                 self.check_listen()
             else:
                 self.listening = False
-                self.display_text("An error occured, try again.")
+                self.display_text("An error occured, Try again.")
                 self.get_audio("An error occured. Try again...")
                 time.sleep(3)
                 self.show_defaults()
@@ -252,7 +240,7 @@ class App(tkinter.Tk):
                     self.display_text(
                         "Your query returned too many possible results. Please try to rephrase your query.")
                     self.get_audio("Your query returned too many possible results. Please try to rephrase your query.")
-                    time.sleep(3)
+                    time.sleep(5)
                     self.show_defaults()
                     self.start_listen()
                 else:
@@ -263,7 +251,7 @@ class App(tkinter.Tk):
                 self.listening = False
                 self.display_text("Your query returned no results.\nPlease try to rephrase your query.")
                 self.get_audio("Your query returned no results. Please try to rephrase your query.")
-                time.sleep(3)
+                time.sleep(5)
                 self.show_defaults()
                 self.start_listen()
 
@@ -281,8 +269,8 @@ class App(tkinter.Tk):
                 self.display_text(thread.response)
                 time.sleep(3)
                 if thread.choice is not None:
-                    self.display_text("\nGetting info of Room " + thread.choice[0]['roomNum'])
-                    self.get_audio("Getting info of Room " + thread.choice[0]['roomNum'])
+                    self.display_text("\nGetting info of " + thread.choice[0]['name'])
+                    self.get_audio("Getting info of " + thread.choice[0]['name'])
                     time.sleep(3)
                     self.get_result(thread.choice[0])
                 else:
@@ -307,7 +295,7 @@ class App(tkinter.Tk):
                     self.listening = False
                     self.display_text("Invalid choice. Please query again.")
                     self.get_audio("Index error occurred. Please query again.")
-                    time.sleep()
+                    time.sleep(3)
                     self.show_defaults()
                     self.start_listen()
 
@@ -324,7 +312,7 @@ class App(tkinter.Tk):
             thread.join()
             if thread.msg is not None:
                 self.display_text(thread.msg)
-                time.sleep(3)
+                time.sleep(5)
                 self.ask_choice(choices)
             else:
                 self.listening = False
@@ -350,7 +338,7 @@ class App(tkinter.Tk):
                 self.display_text("The " + str(room[1]) + " is at the " + str(room[3]) + " Floor.\n\nSay 'Hey RamNav!' "
                                                                                          "to start searching again.")
                 self.display_map(room[4])
-                self.display_local_qr("qrcode.png")
+                self.display_local_qr('qrcode.png')
                 self.get_audio("The " + str(room[1]) + " is at the " + str(room[3]) + " Floor... Say 'Hey RamNav!' to "
                                                                                       "start searching again.")
                 time.sleep(3)

@@ -1,15 +1,15 @@
 import threading
 import time
-#import mysql.connector
+import json
 import requests
 import speech_recognition as sr
 import qrcode
 
-file = requests.get('http://ramnav.westeurope.cloudapp.azure.com/js/rooms.json')
+file = requests.get('http://ramnav.westeurope.cloudapp.azure.com/js/dictionary.json')
 wordbank = file.json()
 rooms = []
 listener = sr.Recognizer()
-
+settings = json.load(open('assets/settings.json'))
 
 class ProcessQuery(threading.Thread):
     def __init__(self, query):
@@ -89,6 +89,7 @@ class GetChoice(threading.Thread):
 
     def run(self):
         with sr.Microphone() as source:
+            self.recognizer.energy_threshold = settings[0]['mic_threshold']
             audio = self.recognizer.listen(source)
 
         # write audio to a WAV file
@@ -104,20 +105,20 @@ class GetChoice(threading.Thread):
         with sr.AudioFile(AUDIO_FILE) as source:
             audio = self.recognizer.record(source)  # read the entire audio file
 
-        query = self.recognizer.recognize_azure(audio, key=self.key, location=self.location)
-
-        first = 0
-        second = 0
-        third = 0
-
-        # Interpret query
-        if 'first' in query.lower():
-            first = 1
-        if 'second' in query.lower():
-            second = 1
-        if 'third' in query.lower():
-            third = 1
         try:
+            query = self.recognizer.recognize_azure(audio, key=self.key, location=self.location)
+            first = 0
+            second = 0
+            third = 0
+
+            # Interpret query
+            if 'first' in query.lower():
+                first = 1
+            if 'second' in query.lower():
+                second = 1
+            if 'third' in query.lower():
+                third = 1
+
             if first + second + third != 1:
                 self.response = "Invalid response, please try to query again.\n\nSay 'Hey, RamNav' to start searching."
                 self.choice = None

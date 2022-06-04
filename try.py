@@ -205,9 +205,10 @@ mydb = mysql.connector.connect(
 mycursor = mydb.cursor()
 mycursor.execute("SELECT * FROM Rooms INNER JOIN Images ON `roomID` = `imgID` WHERE `roomID` = 201")
 myresult = mycursor.fetchone()
-print(myresult[3])"""
+print(myresult[3])
 
 import requests
+import app
 file = requests.get('http://ramnav.westeurope.cloudapp.azure.com/js/rooms.json')
 wordbank = file.json()
 rooms = []
@@ -234,5 +235,9 @@ if counter == 0:
     print("Sorry no keywords found in your query, please try to rephrase.")
 else:
     #print("Your query returned " + str(counter) + " possible results.")
-    print(tmp_msg)
+    print(tmp_msg)"""
 
+import json
+settings = json.load(open('assets/settings.json'))
+
+print(settings[0]['font'])

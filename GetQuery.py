@@ -2,6 +2,7 @@ import threading
 import time
 from tkinter import messagebox
 import speech_recognition as sr
+import json
 
 try:
     import azure.cognitiveservices.speech as speechsdk
@@ -19,6 +20,7 @@ except ImportError:
 AZURE_SPEECH_KEY = "d2216ffb09af4c27ad2df097eb7f3cd3"
 AZURELOCATION = "southeastasia"
 listener = sr.Recognizer()
+settings = json.load(open('assets/settings.json'))
 
 
 class AsyncRecog(threading.Thread):
@@ -82,6 +84,7 @@ class SearchRm(threading.Thread):
 
     def run(self):
         with sr.Microphone() as source:
+            self.recognizer.energy_threshold = settings[0]['mic_threshold']
             audio = self.recognizer.listen(source)
 
         # write audio to a WAV file
@@ -97,14 +100,8 @@ class SearchRm(threading.Thread):
         with sr.AudioFile(AUDIO_FILE) as source:
             audio = self.recognizer.record(source)  # read the entire audio file
 
-        query = self.recognizer.recognize_azure(audio, key=self.key, location=self.location)
-
-        # remove if last character is not a letter
-        # while query and not query[-1].isalpha():
-        #    query = query[:-1]
-
         try:
-            self.query = query
+            self.query = self.recognizer.recognize_azure(audio, key=self.key, location=self.location)
         except sr.UnknownValueError:
             self.query = None
             self.uv = True
@@ -129,6 +126,7 @@ class VerifyQuery(threading.Thread):
 
     def run(self):
         with sr.Microphone() as source:
+            self.recognizer.energy_threshold = settings[0]['mic_threshold']
             audio = self.recognizer.listen(source)
 
         # write audio to a WAV file
@@ -143,10 +141,8 @@ class VerifyQuery(threading.Thread):
         # use the audio file as the audio source
         with sr.AudioFile(AUDIO_FILE) as source:
             audio = self.recognizer.record(source)  # read the entire audio file
-
-        query = self.recognizer.recognize_azure(audio, key=self.key, location=self.location)
-
         try:
+            query = self.recognizer.recognize_azure(audio, key=self.key, location=self.location)
             if 'yes' in query.lower():
                 self.confirm = True
             elif 'no' in query.lower():
