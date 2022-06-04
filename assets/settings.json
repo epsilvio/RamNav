@@ -1,6 +1,6 @@
 [
   {
-    "mic_threshold": 3500,
+    "mic_threshold": 3000,
     "bg_image": "assets/bg.png",
     "exit_btn": "assets/exit.png",
     "setting_btn": "assets/report.png",
