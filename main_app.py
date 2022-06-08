@@ -183,8 +183,9 @@ class App(tkinter.Tk):
         else:
             thread.join()
             if thread.query is not None:
-                self.display_text("Did you say: " + thread.query + "\n(Say Yes or No to confirm)")
-                self.get_audio("Did you say: " + thread.query + "... (Say Yes or No to confirm)")
+                self.display_text("I think you said: " + thread.query)
+                time.sleep(1)
+                self.get_audio("I think you said: " + thread.query)
                 time.sleep(5)
                 self.process_query(thread.query)
             else:
@@ -217,9 +218,9 @@ class App(tkinter.Tk):
                 self.process_query(thread.query)
             else:
                 self.listening = False
-                self.display_text("Query not confirmed. Try querying again.")
+                self.display_text("Inquiry not confirmed. Try searching again.")
                 time.sleep(1)
-                self.get_audio("Query not confirmed. Try querying again.")
+                self.get_audio("Inquiry not confirmed. Try searching again.")
                 time.sleep(3)
                 self.show_defaults()
                 self.start_listen()
@@ -238,8 +239,8 @@ class App(tkinter.Tk):
                 if len(thread.result) > 3:
                     self.listening = False
                     self.display_text(
-                        "Your query returned too many possible results. Please try to rephrase your query.")
-                    self.get_audio("Your query returned too many possible results. Please try to rephrase your query.")
+                        "Your inquiry has many possible results. Please try to rephrase your inquiry.")
+                    self.get_audio("Your inquiry has many possible results. Please try to rephrase your inquiry.")
                     time.sleep(5)
                     self.show_defaults()
                     self.start_listen()
@@ -249,8 +250,8 @@ class App(tkinter.Tk):
                 self.get_result(thread.result[0])
             elif len(thread.result) < 1:
                 self.listening = False
-                self.display_text("Your query returned no results.\nPlease try to rephrase your query.")
-                self.get_audio("Your query returned no results. Please try to rephrase your query.")
+                self.display_text("Your inquiry returned no results.\nPlease try to rephrase your inquiry.")
+                self.get_audio("Your inquiry returned no results. Please try to rephrase your inquiry.")
                 time.sleep(5)
                 self.show_defaults()
                 self.start_listen()
@@ -279,22 +280,22 @@ class App(tkinter.Tk):
             else:
                 if thread.uv:
                     self.listening = False
-                    self.display_text("Unknown Value Error Occurred. Please query again.")
-                    self.get_audio("Unknown Value error occurred. Please query again.")
+                    self.display_text("Unknown Value Error Occurred. Please try searching again.")
+                    self.get_audio("Unknown Value error occurred. Please try searching again.")
                     time.sleep(3)
                     self.show_defaults()
                     self.start_listen()
                 elif thread.re:
                     self.listening = False
-                    self.display_text("Request Error Occurred. Please query again.")
-                    self.get_audio("Request error occurred. Please query again.")
+                    self.display_text("Request Error Occurred. Please try searching again.")
+                    self.get_audio("Request error occurred. Please try searching again.")
                     time.sleep(3)
                     self.show_defaults()
                     self.start_listen()
                 elif thread.ie:
                     self.listening = False
-                    self.display_text("Invalid choice. Please query again.")
-                    self.get_audio("Index error occurred. Please query again.")
+                    self.display_text("Invalid choice. Please try searching again.")
+                    self.get_audio("Index error occurred. Please try searching again.")
                     time.sleep(3)
                     self.show_defaults()
                     self.start_listen()
@@ -317,7 +318,7 @@ class App(tkinter.Tk):
             else:
                 self.listening = False
                 self.display_text("An error occurred. Try again.")
-                self.get_audio("Display result error occurred. Please query again.")
+                self.get_audio("Display result error occurred. Please try searching again.")
                 time.sleep(3)
                 self.show_defaults()
                 self.start_listen()
@@ -345,9 +346,9 @@ class App(tkinter.Tk):
                 self.start_listen()
             else:
                 self.listening = False
-                self.display_text("Your query returned no results.\nPlease try to rephrase your query.\nSay 'Hey, "
+                self.display_text("Your inquiry returned no results.\nPlease try to rephrase your query.\nSay 'Hey, "
                                   "RamNav' to start searching.")
-                self.get_audio("Your query returned no results. Please try to rephrase your query... Say 'Hey, "
+                self.get_audio("Your inquiry returned no results. Please try to rephrase your query... Say 'Hey, "
                                "RamNav' to start searching.")
                 time.sleep(3)
                 self.start_listen()
