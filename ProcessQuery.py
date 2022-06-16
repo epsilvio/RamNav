@@ -4,6 +4,7 @@ import json
 import requests
 import speech_recognition as sr
 import qrcode
+import string
 
 file = requests.get('http://ramnav.westeurope.cloudapp.azure.com/js/dictionary.json')
 wordbank = file.json()
@@ -23,16 +24,28 @@ class ProcessQuery(threading.Thread):
         # Clear rooms variable
         rooms.clear()
 
+        #Remove unwanted punctuation mark in the end
+        if self.query and self.query[-1] in string.punctuation:
+            self.query = self.query[:-1]
+
         # check for keywords
         counter = 0
         for room in wordbank:
             for attr in room.keys():
-                if attr != 'roomID':
+                if attr != 'roomID' and attr != 'roomNum':
                     if room[attr].lower() in self.query.lower():
                         counter += 1
                         room_id = room
                         rooms.append(room_id)
                         break
+                elif attr == 'roomNum':
+                    for word in self.query.lower().split():
+                        if word == room[attr].lower():
+                            counter += 1
+                            room_id = room
+                            rooms.append(room_id)
+                            break
+
         """for key1 in wordbank.keys():
             for key2 in wordbank[key1][0].keys():
                 if wordbank[key1][0][key2].lower() in self.query.lower():

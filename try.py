@@ -236,8 +236,30 @@ if counter == 0:
 else:
     #print("Your query returned " + str(counter) + " possible results.")
     print(tmp_msg)"""
+import requests
+import string
+file = requests.get('http://ramnav.westeurope.cloudapp.azure.com/js/dictionary.json')
+wordbank = file.json()
+query = "Where is the room 1202"
+counter = 0
 
-import json
-settings = json.load(open('assets/settings.json'))
+#Remove unwanted punctuation mark in the end
+if query and query[-1] in string.punctuation:
+    query = query[:-1]
 
-print(settings[0]['font'])
+for room in wordbank:
+    for attr in room.keys():
+        if attr != 'roomID' and attr != 'roomNum':
+            if room[attr].lower() in query.lower():
+                counter += 1
+                #room_id = room
+                #rooms.append(room_id)
+                break
+        elif attr == 'roomNum':
+            for word in query.lower().split():
+                if word == room[attr].lower():
+                    counter += 1
+                    room_id = room
+                    #rooms.append(room_id)
+                    break
+print(counter)
