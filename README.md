@@ -24,9 +24,8 @@ RamNav uses a number of sources to work properly:
 - Python 3.6.0
 - Microsoft Speech Services
 - Microsoft Azure Database
-- Tkinter
 - JSON
-- Pillow
+- PHP
 
 ## Scope of the Project
 These are the main scope of the application:
