@@ -24,9 +24,10 @@ class ProcessQuery(threading.Thread):
         # Clear rooms variable
         rooms.clear()
 
-        #Remove unwanted punctuation mark in the end
+        #Remove unwanted punctuation mark in the end and non-alphanumeric characters
         if self.query and self.query[-1] in string.punctuation:
             self.query = self.query[:-1]
+        #self.query = ''.join(ch for ch in self.query if ch.isalnum())
 
         # check for keywords
         counter = 0

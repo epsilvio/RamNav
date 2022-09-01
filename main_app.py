@@ -70,7 +70,7 @@ class App(tkinter.Tk):
         self.display_map('http://ramnav.westeurope.cloudapp.azure.com/images/map/placeholder.png')
         self.display_local_qr('assets/qr_placeholder.png')
         time.sleep(5)
-        self.get_audio('Say "Hey RamNav to start searching..."')
+        self.get_audio('Say "Hello, RamNav to start searching..."')
         self.start_listen()
 
     def create_btns(self):
@@ -81,7 +81,7 @@ class App(tkinter.Tk):
 
     def create_txt(self):
         # System Output Panel
-        text = 'Say "Hey RamNav to start searching..."'
+        text = 'Say "Hello, RamNav to start searching..."'
         self.text_panel.configure(font=('DS-Digital', 20))
         self.text_panel.insert(END, text)
         self.text_panel.place(x=221, y=570)
@@ -147,12 +147,12 @@ class App(tkinter.Tk):
     def show_defaults(self):
         self.display_map('http://ramnav.westeurope.cloudapp.azure.com/images/map/placeholder.png')
         self.display_local_qr('assets/qr_placeholder.png')
-        self.display_text("Say 'Hey, RamNav' to start searching.")
-        self.get_audio("Say 'Hey, RamNav' to start searching.")
+        self.display_text("Say 'Hello, RamNav' to start searching.")
+        self.get_audio("Say 'Hello, RamNav' to start searching.")
 
     def start_listen(self):
         recog_thread = GQ.AsyncRecog(speechsdk.KeywordRecognizer(),
-                                     speechsdk.KeywordRecognitionModel("RamNav-Trigger.table"), "Hey RamNav")
+                                     speechsdk.KeywordRecognitionModel("RamNav-Trigger-2.table"), "Hello RamNav")
         recog_thread.start()
         self.wait_key(recog_thread)
 
@@ -336,19 +336,19 @@ class App(tkinter.Tk):
             if thread.result is not None:
                 self.listening = False
                 room = thread.result
-                self.display_text("The " + str(room[1]) + " is at the " + str(room[3]) + " Floor.\n\nSay 'Hey RamNav!' "
+                self.display_text("The " + str(room[1]) + " is at the " + str(room[3]) + " Floor.\n\nSay 'Hello, RamNav!' "
                                                                                          "to start searching again.")
                 self.display_map(room[4])
                 self.display_local_qr('qrcode.png')
-                self.get_audio("The " + str(room[1]) + " is at the " + str(room[3]) + " Floor... Say 'Hey RamNav!' to "
+                self.get_audio("The " + str(room[1]) + " is at the " + str(room[3]) + " Floor... Say 'Hello, RamNav!' to "
                                                                                       "start searching again.")
                 time.sleep(3)
                 self.start_listen()
             else:
                 self.listening = False
-                self.display_text("Your inquiry returned no results.\nPlease try to rephrase your query.\nSay 'Hey, "
+                self.display_text("Your inquiry returned no results.\nPlease try to rephrase your query.\nSay 'Hello, "
                                   "RamNav' to start searching.")
-                self.get_audio("Your inquiry returned no results. Please try to rephrase your query... Say 'Hey, "
+                self.get_audio("Your inquiry returned no results. Please try to rephrase your query... Say 'Hello, "
                                "RamNav' to start searching.")
                 time.sleep(3)
                 self.start_listen()
