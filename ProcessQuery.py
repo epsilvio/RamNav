@@ -5,6 +5,7 @@ import requests
 import speech_recognition as sr
 import qrcode
 import string
+import re
 
 file = requests.get('http://ramnav.westeurope.cloudapp.azure.com/js/dictionary.json')
 wordbank = file.json()
@@ -19,6 +20,7 @@ class ProcessQuery(threading.Thread):
         self.query = query
         self.msg = None
         self.result = None
+        self.ban = ["Room", "Office", "and", "is"]
 
     def run(self):
         # Clear rooms variable
@@ -27,33 +29,43 @@ class ProcessQuery(threading.Thread):
         #Remove unwanted punctuation mark in the end and non-alphanumeric characters
         if self.query and self.query[-1] in string.punctuation:
             self.query = self.query[:-1]
-        #self.query = ''.join(ch for ch in self.query if ch.isalnum())
+        self.query = re.sub(r'[^A-Za-z0-9 ]+', '', self.query)
+
+        #Remove common nouns
+        for word in self.ban:
+            for key in self.query.split():
+                if word.lower() == key.lower():
+                    self.query = self.query.replace(key, '')
 
         # check for keywords
         counter = 0
+        done = False
         for room in wordbank:
             for attr in room.keys():
-                if attr != 'roomID' and attr != 'roomNum':
-                    if room[attr].lower() in self.query.lower():
-                        counter += 1
-                        room_id = room
-                        rooms.append(room_id)
-                        break
-                elif attr == 'roomNum':
+                if attr == 'name':
+                    name = re.sub(r'[^A-Za-z0-9 ]+', '', room['name'])
+                    for word in self.query.lower().split():
+                        for key in name.lower().split():
+                            if word == key:
+                                if room in rooms:
+                                    break
+                                else:
+                                    counter += 1
+                                    room_id = room
+                                    rooms.append(room_id)
+                                    done = True
+                                    break
+                elif attr != 'roomID':
                     for word in self.query.lower().split():
                         if word == room[attr].lower():
-                            counter += 1
-                            room_id = room
-                            rooms.append(room_id)
-                            break
-
-        """for key1 in wordbank.keys():
-            for key2 in wordbank[key1][0].keys():
-                if wordbank[key1][0][key2].lower() in self.query.lower():
-                    counter += 1
-                    room_id = key1
-                    rooms.append(room_id)
-                    break"""
+                            if room in rooms:
+                                break
+                            else:
+                                counter += 1
+                                room_id = room
+                                rooms.append(room_id)
+                                done = True
+                                break
 
         if counter == 0:
             # Print the message if the value does not exist

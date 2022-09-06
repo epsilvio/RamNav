@@ -166,11 +166,10 @@ class App(tkinter.Tk):
                 self.check_listen()
             else:
                 self.listening = False
-                self.display_text("An error occured, Try again.")
-                self.get_audio("An error occured. Try again...")
-                time.sleep(3)
-                self.show_defaults()
-                self.start_listen()
+                self.after(100, lambda: self.display_text("An error occured, Try again."))
+                self.after(1000, lambda:self.get_audio("An error occured. Try again..."))
+                self.after(3000, lambda: self.show_defaults())
+                self.after(100, lambda: self.start_listen())
 
     def start_query(self):
         search_thread = GQ.SearchRm()
@@ -183,26 +182,25 @@ class App(tkinter.Tk):
         else:
             thread.join()
             if thread.query is not None:
-                self.display_text("I think you said: " + thread.query)
-                time.sleep(1)
-                self.get_audio("I think you said: " + thread.query)
-                time.sleep(5)
-                self.process_query(thread.query)
+                #self.display_text("I think you said: " + thread.query)
+                #time.sleep(1)
+                #self.process_query(thread.query)
+                self.after(100, lambda: self.display_text("I think you said: " + thread.query))
+                self.after(1000, lambda: self.get_audio("I think you said: " + thread.query))
+                self.after(5000, lambda: self.process_query(thread.query))
             else:
                 if thread.uv:
                     self.listening = False
-                    self.display_text("I did not understand what you said. Try again.")
-                    self.get_audio("I did not understand what you said. Try again.")
-                    time.sleep(3)
-                    self.show_defaults()
-                    self.start_listen()
+                    self.after(100, lambda: self.display_text("I did not understand what you said. Try again."))
+                    self.after(100, lambda: self.get_audio("I did not understand what you said. Try again."))
+                    self.after(3000, lambda: self.show_defaults())
+                    self.after(100, lambda: self.start_listen())
                 elif thread.re:
                     self.listening = False
-                    self.display_text("Server error. Try again.")
-                    self.get_audio("Server error. Try again.")
-                    time.sleep(3)
-                    self.show_defaults()
-                    self.start_listen()
+                    self.after(100, lambda: self.display_text("Server error. Try again."))
+                    self.after(100, lambda: self.get_audio("Server error. Try again."))
+                    self.after(3000, lambda: self.show_defaults())
+                    self.after(100, lambda: self.start_listen())
 
     def verify_query(self, query):
         thread = GQ.VerifyQuery(query)
@@ -238,23 +236,22 @@ class App(tkinter.Tk):
             if len(thread.result) > 1:
                 if len(thread.result) > 3:
                     self.listening = False
-                    self.display_text(
-                        "Your inquiry has many possible results. Please try to rephrase your inquiry.")
-                    self.get_audio("Your inquiry has many possible results. Please try to rephrase your inquiry.")
-                    time.sleep(5)
-                    self.show_defaults()
-                    self.start_listen()
+                    self.after(100, lambda:
+                        self.display_text(
+                            "Your inquiry has many possible results. Please try to rephrase your inquiry."))
+                    self.after(100, lambda: self.get_audio("Your inquiry has many possible results. Please try to rephrase your inquiry."))
+                    self.after(5000, lambda: self.show_defaults())
+                    self.after(100, lambda: self.start_listen())
                 else:
                     self.show_choices(thread.result)
             elif len(thread.result) == 1:
                 self.get_result(thread.result[0])
             elif len(thread.result) < 1:
                 self.listening = False
-                self.display_text("Your inquiry returned no results.\nPlease try to rephrase your inquiry.")
-                self.get_audio("Your inquiry returned no results. Please try to rephrase your inquiry.")
-                time.sleep(5)
-                self.show_defaults()
-                self.start_listen()
+                self.after(100, lambda: self.display_text("Your inquiry returned no results.\nPlease try to rephrase your inquiry."))
+                self.after(100, lambda: self.get_audio("Your inquiry returned no results. Please try to rephrase your inquiry."))
+                self.after(5000, lambda: self.show_defaults())
+                self.after(100, lambda: self.start_listen())
 
     def ask_choice(self, ids):
         ak_thread = PQ.GetChoice(listener, AZURE_SPEECH_KEY, AZURELOCATION, ids)
