@@ -270,7 +270,7 @@ sentence = 'Multi-purpose Hall 1'
 word1 = 'Multipurpose'
 word2 = 'Multipurpose Hall 1'
 query = "Where is the Registrar's Office"
-ban = ["Room", "Office"]
+ban = ["Room", "Office", "Where is the"]
 query = re.sub(r'[^A-Za-z0-9 ]+', '', query)
 print(query)
 for word in ban:
@@ -279,5 +279,7 @@ for word in ban:
             print("true")
             query = query.replace(key, '')
             print(query)
+
+print(ban[2] in query)
 
 

@@ -20,7 +20,7 @@ class ProcessQuery(threading.Thread):
         self.query = query
         self.msg = None
         self.result = None
-        self.ban = ["Room", "Office", "and", "is"]
+        self.ban = ["Room", "Office", "A", "B", "C"]
 
     def run(self):
         # Clear rooms variable
@@ -31,11 +31,18 @@ class ProcessQuery(threading.Thread):
             self.query = self.query[:-1]
         self.query = re.sub(r'[^A-Za-z0-9 ]+', '', self.query)
 
-        #Remove common nouns
+        #Remove common words
         for word in self.ban:
             for key in self.query.split():
                 if word.lower() == key.lower():
-                    self.query = self.query.replace(key, '')
+                    self.query = self.query.lower().replace(key.lower(), '')
+
+        #Remove 'Where is the' problematic phrase
+        if 'Where is the'.lower() in self.query.lower():
+            self.query = self.query.lower().replace('where is the', '')
+
+        #Print the preprocessed query
+        print(self.query)
 
         # check for keywords
         counter = 0
@@ -74,6 +81,7 @@ class ProcessQuery(threading.Thread):
             self.msg = "Your query returned " + str(counter) + " possible results."
 
         self.result = rooms
+        print(self.result)
 
 
 class ShowChoices(threading.Thread):
