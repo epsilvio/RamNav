@@ -272,14 +272,18 @@ word2 = 'Multipurpose Hall 1'
 query = "Where is the Registrar's Office"
 ban = ["Room", "Office", "Where is the"]
 query = re.sub(r'[^A-Za-z0-9 ]+', '', query)
-print(query)
-for word in ban:
-    for key in query.split():
-        if word.lower() == key.lower():
-            print("true")
-            query = query.replace(key, '')
-            print(query)
+data = [{
+    'id': 1, 'name1': 'a', 'name2': 'A', 'name3': 'Aa'
+},{
+    'id': 2, 'name1': 'b', 'name2': 'B', 'name3': ['Bb','BB']
+},{
+    'id': 3, 'name1': 'c', 'name2': 'C', 'name3': 'Cc'
+}]
 
-print(ban[2] in query)
-
-
+"""for ele in data:
+    for attr in ele.keys():
+        if 'name' in attr:
+            print(attr + ' is a name attribute')
+        else:
+            print(attr + ' is not a name attribute')"""
+print('BB' in data[1]['name3'])

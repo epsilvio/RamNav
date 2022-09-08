@@ -13,6 +13,7 @@ rooms = []
 listener = sr.Recognizer()
 settings = json.load(open('assets/settings.json'))
 
+
 class ProcessQuery(threading.Thread):
     def __init__(self, query):
         super(ProcessQuery, self).__init__()
@@ -20,33 +21,32 @@ class ProcessQuery(threading.Thread):
         self.query = query
         self.msg = None
         self.result = None
-        self.ban = ["Room", "Office", "A", "B", "C"]
+        self.ban = ["Room", "Office", "A", "B", "C", "Laboratory", "Studio"]
 
     def run(self):
         # Clear rooms variable
         rooms.clear()
 
-        #Remove unwanted punctuation mark in the end and non-alphanumeric characters
+        # Remove unwanted punctuation mark in the end and non-alphanumeric characters
         if self.query and self.query[-1] in string.punctuation:
             self.query = self.query[:-1]
         self.query = re.sub(r'[^A-Za-z0-9 ]+', '', self.query)
 
-        #Remove common words
+        # Remove common words
         for word in self.ban:
             for key in self.query.split():
                 if word.lower() == key.lower():
                     self.query = self.query.lower().replace(key.lower(), '')
 
-        #Remove 'Where is the' problematic phrase
+        # Remove 'Where is the' problematic phrase
         if 'Where is the'.lower() in self.query.lower():
             self.query = self.query.lower().replace('where is the', '')
 
-        #Print the preprocessed query
+        # Print the preprocessed query
         print(self.query)
 
         # check for keywords
         counter = 0
-        done = False
         for room in wordbank:
             for attr in room.keys():
                 if attr == 'name':
@@ -60,8 +60,16 @@ class ProcessQuery(threading.Thread):
                                     counter += 1
                                     room_id = room
                                     rooms.append(room_id)
-                                    done = True
                                     break
+                elif 'keyword' in attr:
+                    if room[attr].lower() in self.query.lower():
+                        if room in rooms:
+                            break
+                        else:
+                            counter += 1
+                            room_id = room
+                            rooms.append(room_id)
+                            break
                 elif attr != 'roomID':
                     for word in self.query.lower().split():
                         if word == room[attr].lower():
@@ -71,7 +79,6 @@ class ProcessQuery(threading.Thread):
                                 counter += 1
                                 room_id = room
                                 rooms.append(room_id)
-                                done = True
                                 break
 
         if counter == 0:
@@ -146,15 +153,15 @@ class GetChoice(threading.Thread):
             third = 0
 
             # Interpret query
-            if 'first' in query.lower():
+            if 'first' in query.lower().split():
                 first = 1
-            if 'second' in query.lower():
+            if 'second' in query.lower().split():
                 second = 1
-            if 'third' in query.lower():
+            if 'third' in query.lower().split():
                 third = 1
 
             if first + second + third != 1:
-                self.response = "Invalid response, please try to query again.\n\nSay 'Hey, RamNav' to start searching."
+                self.response = "Invalid response, please try to query again.\n\nSay 'Hello, RamNav' to start searching."
                 self.choice = None
             else:
                 try:
