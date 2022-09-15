@@ -212,13 +212,13 @@ class ShowResult(threading.Thread):
         self.result = [self.id['roomID'], self.id['name'], self.id['roomNum'],
                        self.id['roomLvl'],
                        "http://ramnav.westeurope.cloudapp.azure.com/images/map/" + self.id['roomID'] + ".png"]
-        self.create_qr(str(self.result[0]) + ".png")
+        self.create_qr(str(self.result[0]))
         rooms.clear()
 
     @staticmethod
     def create_qr(room):
         # Link for website
-        input_data = "http://ramnav.westeurope.cloudapp.azure.com/images/map/" + room
+        input_data = "http://ramnav.westeurope.cloudapp.azure.com/?id=" + room
         # Creating an instance of qrcode
         qr = qrcode.QRCode(
             version=1,
