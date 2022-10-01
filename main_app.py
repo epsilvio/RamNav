@@ -11,6 +11,7 @@ import speech_recognition as sr
 import ProcessQuery as PQ
 import GetQuery as GQ
 import PlayAudioResponse as PAR
+import webbrowser
 
 try:
     import azure.cognitiveservices.speech as speechsdk
@@ -57,7 +58,7 @@ class App(tkinter.Tk):
         self.qr_label = Label(self, image=self.disp_bg[1])
         self.txtarea_label = Label(self, image=self.disp_bg[2])
         self.exit_btn = Button(self, image=self.btn_bg[2], fg='white', command=self.exit_app, borderwidth=0)
-        self.report_btn = Button(self, image=self.btn_bg[1], fg='white', command="", borderwidth=0)
+        self.report_btn = Button(self, image=self.btn_bg[1], fg='white', command=self.report, borderwidth=0)
         self.search_btn = Button(self, image=self.btn_bg[0], fg='white', command=self.check_listen, borderwidth=0)
         self.text_panel = Text(self, fg='black', bg='#669DB3', height=4, width=61, borderwidth=0)
         self.map_panel = Label(self, image=self.disp_bg[0], borderwidth=0)
@@ -351,7 +352,7 @@ class App(tkinter.Tk):
                 self.start_listen()
 
     def report(self):
-        self.display_text("Report Btn")
+        webbrowser.open('https://ramnav.westeurope.cloudapp.azure.com')
 
     def update(self):
         self.display_text("Update Btn")
