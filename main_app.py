@@ -12,6 +12,7 @@ import ProcessQuery as PQ
 import GetQuery as GQ
 import PlayAudioResponse as PAR
 import webbrowser
+import GoogleTTS as GTTS
 
 try:
     import azure.cognitiveservices.speech as speechsdk
@@ -121,7 +122,7 @@ class App(tkinter.Tk):
             messagebox.showwarning("Warning", "No/Invalid file selected")
 
     def get_audio(self, script):
-        play_thread = PAR.ProcessAudio(script)
+        play_thread = GTTS.ProcessResponse(script)
         play_thread.start()
         self.play_audio(play_thread)
 
@@ -168,7 +169,7 @@ class App(tkinter.Tk):
             else:
                 self.listening = False
                 self.after(100, lambda: self.display_text("An error occured, Try again."))
-                self.after(1000, lambda:self.get_audio("An error occured. Try again..."))
+                self.get_audio("An error occured. Try again...")
                 self.after(3000, lambda: self.show_defaults())
                 self.after(100, lambda: self.start_listen())
 
@@ -187,19 +188,19 @@ class App(tkinter.Tk):
                 #time.sleep(1)
                 #self.process_query(thread.query)
                 self.after(100, lambda: self.display_text("I think you said: " + thread.query))
-                self.after(1000, lambda: self.get_audio("I think you said: " + thread.query))
+                self.get_audio("I think you said: " + thread.query)
                 self.after(5000, lambda: self.process_query(thread.query))
             else:
                 if thread.uv:
                     self.listening = False
                     self.after(100, lambda: self.display_text("I did not understand what you said. Try again."))
-                    self.after(100, lambda: self.get_audio("I did not understand what you said. Try again."))
+                    self.get_audio("I did not understand what you said. Try again.")
                     self.after(3000, lambda: self.show_defaults())
                     self.after(100, lambda: self.start_listen())
                 elif thread.re:
                     self.listening = False
                     self.after(100, lambda: self.display_text("Server error. Try again."))
-                    self.after(100, lambda: self.get_audio("Server error. Try again."))
+                    self.get_audio("Server error. Try again.")
                     self.after(3000, lambda: self.show_defaults())
                     self.after(100, lambda: self.start_listen())
 
@@ -240,7 +241,7 @@ class App(tkinter.Tk):
                     self.after(100, lambda:
                         self.display_text(
                             "Your inquiry has many possible results. Please try to rephrase your inquiry."))
-                    self.after(100, lambda: self.get_audio("Your inquiry has many possible results. Please try to rephrase your inquiry."))
+                    self.get_audio("Your inquiry has many possible results. Please try to rephrase your inquiry.")
                     self.after(5000, lambda: self.show_defaults())
                     self.after(100, lambda: self.start_listen())
                 else:
@@ -250,7 +251,7 @@ class App(tkinter.Tk):
             elif len(thread.result) < 1:
                 self.listening = False
                 self.after(100, lambda: self.display_text("Your inquiry returned no results.\nPlease try to rephrase your inquiry."))
-                self.after(100, lambda: self.get_audio("Your inquiry returned no results. Please try to rephrase your inquiry."))
+                self.get_audio("Your inquiry returned no results. Please try to rephrase your inquiry.")
                 self.after(5000, lambda: self.show_defaults())
                 self.after(100, lambda: self.start_listen())
 

@@ -262,8 +262,7 @@ for room in wordbank:
                     room_id = room
                     #rooms.append(room_id)
                     break
-print(counter)"""
-
+print(counter)
 import re
 
 sentence = 'Multi-purpose Hall 1'
@@ -280,10 +279,121 @@ data = [{
     'id': 3, 'name1': 'c', 'name2': 'C', 'name3': 'Cc'
 }]
 
-"""for ele in data:
+for ele in data:
     for attr in ele.keys():
         if 'name' in attr:
             print(attr + ' is a name attribute')
         else:
-            print(attr + ' is not a name attribute')"""
+            print(attr + ' is not a name attribute')
 print('BB' in data[1]['name3'])
+
+
+import speech_recognition as sr
+import requests
+import re
+file = requests.get('http://ramnav.westeurope.cloudapp.azure.com/js/dictionary.json')
+wordbank = file.json()
+
+print("Which room or facility are you looking for?")
+
+#Get sound input from mic
+with sr.Microphone() as source:
+    audio = sr.Recognizer().listen(source)
+
+#Write sound to WAV file
+with open("query.wav", "wb") as f:
+    f.write(audio.get_wav_data())
+
+# obtain path to "query.wav" in the same folder as this script
+from os import path
+AUDIO_FILE = path.join(path.dirname(path.realpath(__file__)), "query.wav")
+
+# use the audio file as the audio source
+with sr.AudioFile(AUDIO_FILE) as source:
+    audio = sr.Recognizer().record(source)  # read the entire audio file
+
+query = sr.Recognizer().recognize_azure(audio, key='d2216ffb09af4c27ad2df097eb7f3cd3', location='southeastasia')
+
+print('I think you said: ', query)
+
+rooms = []
+rooms.clear()
+
+# check for keywords
+counter = 0
+for room in wordbank:
+    for attr in room.keys():
+        if attr == 'name':
+            name = re.sub(r'[^A-Za-z0-9 ]+', '', room['name'])
+            for word in query.lower().split():
+                for key in name.lower().split():
+                    if word == key:
+                        if room in rooms:
+                            break
+                        else:
+                            counter += 1
+                            room_id = room
+                            rooms.append(room_id)
+                            break
+        elif 'keyword' in attr:
+            if room[attr].lower() in query.lower():
+                if room in rooms:
+                    break
+                else:
+                    counter += 1
+                    room_id = room
+                    rooms.append(room_id)
+                    break
+        elif attr != 'roomID':
+            for word in query.lower().split():
+                if word == room[attr].lower():
+                    if room in rooms:
+                        break
+                    else:
+                        counter += 1
+                        room_id = room
+                        rooms.append(room_id)
+                        break
+
+if counter == 0:
+    # Print the message if the value does not exist
+    msg = "Sorry no keywords found in your query, please try to rephrase."
+else:
+    msg = "Your query returned " + str(counter) + " possible results."
+
+result = rooms
+print(result)"""
+
+import os
+import azure.cognitiveservices.speech as speechsdk
+
+# Creates an instance of a speech config with specified subscription key and service region.
+speech_key = "d2216ffb09af4c27ad2df097eb7f3cd3"
+service_region = "southeastasia"
+speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=service_region)
+audio_config = speechsdk.audio.AudioOutputConfig(use_default_speaker=True)
+# Note: the voice setting will not overwrite the voice element in input SSML.
+speech_config.speech_synthesis_voice_name = 'en-US-JennyNeural'
+
+
+speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=audio_config)
+
+# Get text from the console and synthesize to the default speaker.
+print("Enter some text that you want to speak >")
+text = input()
+
+speech_synthesis_result = speech_synthesizer.speak_text_async(text).get()
+
+if speech_synthesis_result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
+    print("Speech synthesized for text [{}]".format(text))
+elif speech_synthesis_result.reason == speechsdk.ResultReason.Canceled:
+    cancellation_details = speech_synthesis_result.cancellation_details
+    print("Speech synthesis canceled: {}".format(cancellation_details.reason))
+    if cancellation_details.reason == speechsdk.CancellationReason.Error:
+        if cancellation_details.error_details:
+            print("Error details: {}".format(cancellation_details.error_details))
+            print("Did you set the speech resource key and region values?")
+
+
+
+
