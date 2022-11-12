@@ -2,8 +2,8 @@ import azure.cognitiveservices.speech as speechsdk
 import threading
 
 # Creates an instance of a speech config with specified subscription key and service region.
-speech_key = "d2216ffb09af4c27ad2df097eb7f3cd3"
-service_region = "southeastasia"
+speech_key = "[AZURE-PRIVATE-KEY]"
+service_region = "[SERVER-REGION]"
 speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=service_region)
 # Note: the voice setting will not overwrite the voice element in input SSML.
 speech_config.speech_synthesis_voice_name = "en-AU-WilliamNeural"
