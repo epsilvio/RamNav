@@ -3,7 +3,7 @@ from playsound import playsound
 import os
 import threading
 
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'ramnav-tts-key.json'
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = '[PRIVATE-KEY-FILE]'
 
 # Instantiates a client
 client = texttospeech.TextToSpeechClient()
