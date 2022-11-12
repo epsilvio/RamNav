@@ -28,8 +28,8 @@ except ImportError:
     sys.exit(1)
 
 # GLOBAL VARIABLES
-AZURE_SPEECH_KEY = "d2216ffb09af4c27ad2df097eb7f3cd3"
-AZURELOCATION = "southeastasia"
+AZURE_SPEECH_KEY = "[AZURE-PRIVATE-KEY]"
+AZURELOCATION = "[SERVER-REGION]"
 listener = sr.Recognizer()
 settings = json.load(open('assets/settings.json'))
 screenW = 0
